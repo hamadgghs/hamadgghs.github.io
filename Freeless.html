@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0b0c">
+<title>ReelFree</title>
+<style>
+:root{--bg:#0b0b0c;--panel:#17171a;--line:#2a2a2f;--text:#f1eeea;--mute:#a09b95;--red:#d6252e;--red2:#ff4b53;--r:10px}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,.logo{font-family:Georgia,serif;font-weight:700}
+h1{font-size:clamp(1.9rem,7vw,3rem);line-height:1.1}
+h2{font-size:1.3rem;margin-bottom:.7rem}
+.wrap{padding:1.2rem 1rem;max-width:1200px;margin:0 auto}
+.top{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.6rem 1rem;background:#0b0b0cf0;border-bottom:1px solid var(--line)}
+.logo{font-size:1.5rem;margin-right:auto}.logo b{color:var(--red)}
+#menu{background:none;border:1px solid var(--line);color:var(--text);padding:.4rem .8rem;border-radius:99px;font:inherit}
+#sf{order:3;flex:1 0 100%}
+input,select{font:inherit}
+#q,.filters input,.filters select,.custom input{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:.65rem .9rem;border-radius:99px}
+#nav{display:none;flex:1 0 100%;flex-direction:column;order:4}
+#nav.open{display:flex}
+#nav a{padding:.7rem .4rem;border-bottom:1px solid var(--line)}
+#nav a.on,#nav .don{color:var(--red2)}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:.7rem 1.2rem;border-radius:99px;font:inherit;font-weight:600;cursor:pointer}
+.btn.red{background:var(--red);border-color:var(--red)}
+.btns{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{padding:.4rem .9rem;border:1px solid var(--line);border-radius:99px;background:var(--panel)}
+.hero{min-height:60vh;display:flex;align-items:flex-end;padding:2rem 1rem;background:linear-gradient(to top,var(--bg) 4%,transparent 70%),radial-gradient(120% 90% at 80% 10%,hsl(var(--h) 70% 30%),transparent 60%),#111;animation:fade .8s both}
+.hero-in{max-width:640px}.hero p{color:#d8d3cd;margin-top:.5rem}
+.tag{display:inline-block;background:var(--red);padding:.1rem .6rem;border-radius:4px;font-size:.85rem;margin-bottom:.6rem}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.row{display:flex;gap:.8rem;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:.6rem}
+.row .card{flex:0 0 130px;scroll-snap-align:start}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem}
+.poster{aspect-ratio:2/3;border-radius:var(--r);background:linear-gradient(160deg,hsl(var(--h) 60% 30%),#101012 85%);display:flex;align-items:flex-end;padding:.6rem;transition:transform .25s}
+.card:hover .poster{transform:translateY(-3px)}
+.poster span{font-family:Georgia,serif;font-weight:700;line-height:1.15;text-shadow:0 1px 6px #000}
+.meta{padding:.4rem .1rem}.meta strong{display:block;font-size:.95rem}
+.meta small,.mute{color:var(--mute)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.8rem 0 1rem}
+.filters input{grid-column:1/-1}.filters select{border-radius:var(--r)}
+.mhead{padding:1.5rem 1rem;background:linear-gradient(to top,var(--bg),transparent),radial-gradient(120% 100% at 100% 0,hsl(var(--h) 60% 26%),#111)}
+.facts{display:flex;flex-wrap:wrap;gap:.5rem 1rem;color:var(--mute);margin:.5rem 0}
+.player{position:relative;background:#000;border-radius:var(--r);overflow:hidden;max-width:1000px}
+.player video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.pmsg{position:absolute;top:0;left:0;right:0;padding:.6rem 1rem;background:#d6252ee8;font-size:.9rem}
+.pmsg:empty{display:none}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;padding:.5rem;background:#141416}
+.ctl button,.ctl select{background:#232327;color:var(--text);border:0;border-radius:8px;padding:.45rem .7rem;font-size:.9rem;min-height:40px}
+.ctl #seek{flex:1 0 100%;order:-1;accent-color:var(--red)}
+.ctl #vol{width:80px;accent-color:var(--red)}
+.ctl #tm{color:var(--mute);font-size:.85rem;margin-right:auto}
+.player:fullscreen{max-width:none;border-radius:0;display:flex;flex-direction:column;justify-content:center}
+.player:fullscreen video{flex:1;min-height:0;aspect-ratio:auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1rem;margin-top:1rem}
+.panel h3{margin-bottom:.4rem}.dl{display:flex;flex-wrap:wrap;gap:.5rem}
+.amounts{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin:1rem 0}
+.amounts button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:.9rem;font:inherit;font-size:1.1rem}
+.amounts button[aria-pressed=true]{border-color:var(--red);background:#2a1214}
+.custom{margin-bottom:1rem}.custom label{display:block;margin-bottom:.3rem}
+.note{margin-top:.8rem;padding:.7rem 1rem;border-left:3px solid var(--red);background:var(--panel)}.note:empty{display:none}
+.center{text-align:center;padding:3rem 1rem}
+footer{padding:1.5rem 1rem;border-top:1px solid var(--line);color:var(--mute);font-size:.85rem;text-align:center}
+@media(min-width:700px){
+#menu{display:none}
+#nav{display:flex;flex-direction:row;flex:0 0 auto;order:2;gap:1rem}
+#nav a{border:0;padding:.3rem 0}
+#sf{order:1;flex:0 1 280px}.top{flex-wrap:nowrap}
+.grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}.row .card{flex-basis:170px}
+.filters{grid-template-columns:2fr 1fr 1fr 1fr}.filters input{grid-column:auto}
+.amounts{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:600px){.ctl #vol{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#/">Reel<b>Free</b></a>
+  <form id="sf"><input id="q" type="search" placeholder="Search movies" aria-label="Search"></form>
+  <button id="menu">Menu</button>
+  <nav id="nav">
+    <a href="#/" data-r="home">Home</a>
+    <a href="#/browse" data-r="browse">Browse</a>
+    <a href="#/donate" data-r="donate" class="don">Donate</a>
+  </nav>
+</header>
+<main id="app"></main>
+<footer>ReelFree lists only public-domain or properly licensed films. Videos are hosted by third parties.</footer>
+
+<script>
+/* ===== SETTINGS: edit here ===== */
+const DONATION_URL = "";
+
+const demoVtt = URL.createObjectURL(new Blob(
+  ["WEBVTT\n\n00:00:01.000 --> 00:00:06.000\n[Demo subtitle track]\n"], {type: "text/vtt"}));
+
+/* ===== MOVIES: updated with working link ===== */
+const MOVIES = [
+ {
+  id: "big-buck-bunny",
+  title: "Big Buck Bunny",
+  year: 2008,
+  runtime: 10,
+  genres: ["Animation", "Comedy"],
+  rating: 7.2,
+  popularity: 100,
+  trend: 70,
+  added: "2026-10-20",
+  featured: true,
+  hue: 135,
+  description: "A giant rabbit teaches three bullying rodents a lesson.",
+  languages: ["English"],
+  sources: [
+   {
+    label: "Standard",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+   }
+  ],
+  subtitles: [],
+  downloads: [
+   {
+    label: "MP4 file",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+   }
+  ],
+  license: "Public Domain"
+ }
+];
+
+/* ===== APP ===== */
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), app=$('#app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=t=>{if(!isFinite(t))return'0:00';return Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0')};
+const genres=[...new Set(MOVIES.flatMap(m=>m.genres))].sort();
+const years=[...new Set(MOVIES.map(m=>m.year))].sort((a,b)=>b-a);
+const sorters={popular:(a,b)=>b.popularity-a.popularity,rating:(a,b)=>b.rating-a.rating,newest:(a,b)=>b.year-a.year,added:(a,b)=>b.added.localeCompare(a.added),trend:(a,b)=>b.trend-a.trend};
+const sorted=k=>[...MOVIES].sort(sorters[k]);
+const card=m=>`<a class="card" href="#/movie/${m.id}"><div class="poster" style="--h:${m.hue}"><span>${esc(m.title)}</span></div><div class="meta"><strong>${esc(m.title)}</strong><small>${m.year}, ${m.rating} stars</small></div></a>`;
+const row=(t,l)=>`<section class="wrap"><h2>${t}</h2><div class="row">${l.map(card).join('')}</div></section>`;
+
+function home(){
+ const f=MOVIES.find(m=>m.featured)||MOVIES[0];
+ app.innerHTML=`<section class="hero" style="--h:${f.hue}"><div class="hero-in"><span class="tag">Featured</span><h1>${esc(f.title)}</h1><p>${f.year}, ${f.runtime} min</p><p>${esc(f.description)}</p><div class="btns"><a class="btn red" href="#/movie/${f.id}">Watch now</a><a class="btn" href="#/donate">Support the project</a></div></div></section>
+ <section class="wrap"><h2>Categories</h2><div class="chips">${genres.map(g=>`<a class="chip" href="#/browse?genre=${encodeURIComponent(g)}">${esc(g)}</a>`).join('')}</div></section>
+ ${row('Trending now',sorted('trend'))}${row('Recently added',sorted('added'))}${row('Popular',sorted('popular'))}`;
+}
+
+function browse(p){
+ const o=(v,l,c)=>`<option value="${esc(v)}"${String(c)===String(v)?' selected':''}>${esc(l)}</option>`;
+ app.innerHTML=`<section class="wrap"><h1>Browse</h1><div class="filters">
+ <input id="fq" type="search" placeholder="Search by title" value="${esc(p.get('q')||'')}">
+ <select id="fg">${o('','All genres',p.get('genre')||'')}${genres.map(g=>o(g,g,p.get('genre'))).join('')}</select>
+ <select id="fy">${o('','All years',p.get('year')||'')}${years.map(y=>o(y,y,p.get('year'))).join('')}</select>
+ <select id="fs">${o('popular','Most popular',p.get('sort')||'popular')}${o('rating','Top rated',p.get('sort'))}${o('newest','Newest release',p.get('sort'))}${o('added','Recently added',p.get('sort'))}</select>
+ </div><p class="mute" id="count"></p><div class="grid" id="grid"></div></section>`;
+ const update=()=>{
+  const q=$('#fq').value.trim().toLowerCase(),g=$('#fg').value,y=$('#fy').value,s=$('#fs').value;
+  const l=MOVIES.filter(m=>(!q||m.title.toLowerCase().includes(q))&&(!g||m.genres.includes(g))&&(!y||m.year===+y)).sort(sorters[s]);
+  $('#grid').innerHTML=l.map(card).join('');
+  $('#count').textContent=l.length?l.length+' movie(s)':'No movies match. Try clearing a filter.';
+ };
+ ['fq','fg','fy','fs'].forEach(id=>$('#'+id).addEventListener('input',update));
+ update();
+}
+
+function movie(id){
+ const m=MOVIES.find(x=>x.id===id); if(!m)return nf();
+ const subs=m.subtitles||[],dls=m.downloads||[];
+ app.innerHTML=`<section class="mhead" style="--h:${m.hue}"><div class="wrap" style="padding:0"><h1>${esc(m.title)}</h1><div class="facts"><span>${m.year}</span><span>${m.runtime} min</span><span>${m.rating} stars</span><span>${esc(m.genres.join(', '))}</span></div></div></section>
+ <section class="wrap"><div class="player" id="pl"><video id="v" playsinline preload="metadata"></video><div class="pmsg" id="pmsg"></div>
+ <div class="ctl"><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+ <button id="pp">Play</button><span id="tm">0:00 / 0:00</span><button id="mu">Mute</button>
+ <input id="vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+ <select id="spd" aria-label="Speed">${[0.5,0.75,1,1.25,1.5,2].map(s=>`<option value="${s}"${s===1?' selected':''}>${s}x</option>`).join('')}</select>
+ ${m.sources.length>1?`<select id="qual" aria-label="Quality">${m.sources.map((s,i)=>`<option value="${i}">${esc(s.label)}</option>`).join('')}</select>`:''}
+ ${subs.length?`<select id="cc" aria-label="Subtitles"><option value="-1">Subtitles off</option>${subs.map((s,i)=>`<option value="${i}">${esc(s.label)}</option>`).join('')}</select>`:''}
+ <button id="fs">Fullscreen</button></div></div>
+ <div class="panel"><h3>About</h3><p>${esc(m.description)}</p></div>
+ <div class="panel"><h3>Languages and subtitles</h3><p>Audio: ${esc(m.languages.join(', '))}. Subtitles: ${subs.length?esc(subs.map(s=>s.label).join(', ')):'none yet'}.</p></div>
+ ${dls.length?`<div class="panel"><h3>Download</h3><div class="dl">${dls.map(d=>`<a class="btn" href="${esc(d.url)}" download rel="noopener">${esc(d.label)}</a>`).join('')}</div></div>`:''}
+ <div class="panel"><h3>License</h3><p class="mute">${esc(m.license)}</p></div></section>`;
+ player(m);
+}
+
+function player(m){
+ const g=id=>$('#'+id),pl=g('pl'),v=g('v'),pp=g('pp'),seek=g('seek'),tm=g('tm'),mu=g('mu'),vol=g('vol'),spd=g('spd'),qual=g('qual'),cc=g('cc'),fs=g('fs'),msg=g('pmsg');
+ const load=(i,keep)=>{const t=keep?v.currentTime:0,was=keep&&!v.paused;msg.textContent='';v.src=m.sources[i].url;
+  v.addEventListener('loadedmetadata',()=>{if(t)v.currentTime=t;if(was)v.play()},{once:true})};
+ load(0,false);
+ (m.subtitles||[]).forEach(s=>{const t=document.createElement('track');t.kind='subtitles';t.label=s.label;t.srclang=s.lang;t.src=s.url;v.appendChild(t)});
+ const toggle=()=>v.paused?v.play():v.pause();
+ pp.onclick=toggle;v.onclick=toggle;
+ v.addEventListener('play',()=>pp.textContent='Pause');
+ v.addEventListener('pause',()=>pp.textContent='Play');
+ v.addEventListener('timeupdate',()=>{if(v.duration)seek.value=v.currentTime/v.duration*1000;tm.textContent=fmt(v.currentTime)+' / '+fmt(v.duration)});
+ v.addEventListener('loadedmetadata',()=>tm.textContent='0:00 / '+fmt(v.duration));
+ seek.oninput=()=>{if(v.duration)v.currentTime=seek.value/1000*v.duration};
+ vol.oninput=()=>{v.volume=+vol.value;v.muted=false};
+ mu.onclick=()=>v.muted=!v.muted;
+ v.addEventListener('volumechange',()=>mu.textContent=v.muted||v.volume===0?'Unmute':'Mute');
+ spd.onchange=()=>v.playbackRate=+spd.value;
+ if(qual)qual.onchange=()=>load(+qual.value,true);
+ if(cc)cc.onchange=()=>Array.from(v.textTracks).forEach((t,i)=>t.mode=i===+cc.value?'showing':'hidden');
+ fs.onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else if(pl.requestFullscreen)pl.requestFullscreen();else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen()};
+ v.addEventListener('error',()=>msg.textContent='Video failed to load. Check your internet or try another quality.');
+}
+
+function donate(){
+ app.innerHTML=`<section class="wrap" style="max-width:640px"><h1>Support ReelFree</h1>
+ <p class="mute" style="margin:.6rem 0 1.2rem">ReelFree is free to watch, with no pop-ups. Donations are optional.</p>
+ <div class="amounts">${[3,5,10,25].map(a=>`<button type="button" data-a="${a}" aria-pressed="${a===5}">$${a}</button>`).join('')}</div>
+ <div class="custom"><label for="ca">Or enter your own amount (USD)</label><input id="ca" type="number" min="1" inputmode="numeric" placeholder="e.g. 15"></div>
+ <button class="btn red" id="go" type="button">Donate $5</button><p class="note" id="dn"></p></section>`;
+ const go=$('#go'),dn=$('#dn'),ca=$('#ca'),bs=app.querySelectorAll('.amounts button');
+ const off=()=>bs.forEach(x=>x.setAttribute('aria-pressed','false'));
+ bs.forEach(b=>b.onclick=()=>{off();b.setAttribute('aria-pressed','true');ca.value='';go.textContent='Donate $'+b.dataset.a});
+ ca.oninput=()=>{const n=Math.floor(+ca.value);if(n>=1){off();go.textContent='Donate $'+n}};
+ go.onclick=()=>{if(!DONATION_URL){dn.textContent='Donations are not open yet. Thank you for wanting to help.';return}window.open(DONATION_URL,'_blank','noopener')};
+}
+const thanks=()=>app.innerHTML=`<section class="center"><h1>Thank you</h1><p class="mute" style="margin:.8rem 0 1.2rem">Your support keeps ReelFree free for everyone.</p><a class="btn red" href="#/">Back to movies</a></section>`;
+function nf(){app.innerHTML=`<section class="center"><h1>Page not found</h1><p class="mute" style="margin:.8rem 0 1.2rem">That page does not exist.</p><a class="btn red" href="#/browse">Browse movies</a></section>`}
+
+function route(){
+ const [path,qs]=(location.hash.slice(1)||'/').split('?'),parts=path.split('/').filter(Boolean),p=new URLSearchParams(qs||''),r=parts[0]||'home';
+ if(r==='home')home();else if(r==='browse')browse(p);else if(r==='movie')movie(parts[1]);else if(r==='donate')donate();else if(r==='thank-you')thanks();else nf();
+ document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
+ $('#nav').classList.remove('open');window.scrollTo(0,0);
+}
+$('#menu').onclick=()=>$('#nav').classList.toggle('open');
+$('#sf').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();location.hash='#/browse'+(q?'?q='+encodeURIComponent(q):'');$('#q').blur()};
+window.addEventListener('hashchange',route);
+route();
+})();
+</script>
+</body>
+</html>
