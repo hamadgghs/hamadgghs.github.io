@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">مستكشف قيمة باي - Pi Explorer</title>
+<style>
+:root{
+  --primary:#4f46e5; --primary-hover:#4338ca;
+  --bg-color:#f8fafc; --card-bg:#ffffff;
+  --text-main:#1e293b; --text-muted:#64748b;
+  --border:#e2e8f0; --box-bg:#0f172a; --box-color:#f8fafc;
+  --c0:#ef4444; --c1:#f97316; --c2:#f59e0b; --c3:#eab308; --c4:#10b981;
+  --c5:#06b6d4; --c6:#3b82f6; --c7:#6366f1; --c8:#8b5cf6; --c9:#ec4899;
+}
+[data-theme="dark"]{
+  --bg-color:#0b0f19; --card-bg:#1e293b; --text-main:#f8fafc;
+  --text-muted:#94a3b8; --border:#334155; --box-bg:#020617;
+}
+*{box-sizing:border-box}
+body{
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  background:linear-gradient(-45deg,#4f46e5,#06b6d4,#10b981,#f59e0b);
+  background-size:400% 400%;
+  animation:gradientBG 15s ease infinite;
+  margin:0; padding:20px; color:var(--text-main);
+  min-height:100vh; display:flex; justify-content:center; align-items:center;
+}
+@keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.container{
+  max-width:650px; width:100%; background:var(--card-bg);
+  padding:28px; border-radius:20px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
+  transition:background .3s ease,color .3s ease;
+}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px}
+.top-controls{display:flex;gap:10px;align-items:center}
+.lang-switcher select,.theme-btn{
+  padding:8px 12px;font-size:14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--card-bg);color:var(--text-main);cursor:pointer;outline:none;transition:.2s;
+}
+.theme-btn:hover,.lang-switcher select:hover{border-color:var(--primary)}
+.back-btn{
+  padding:8px 16px;font-size:14px;font-weight:600;background:#fee2e2;color:#dc2626;
+  border:none;border-radius:8px;cursor:pointer;visibility:hidden;transition:.2s;
+}
+.back-btn:hover{background:#fecaca}
+
+/* العنوان: سطر رئيسي + سطر فرعي، بدون أقواس تتكسر */
+.title-block{text-align:center;margin:6px 0 26px}
+.title-block h2{margin:0;font-size:26px;line-height:1.3}
+.title-block .sub{
+  display:inline-block;margin-top:6px;padding:3px 14px;border-radius:20px;
+  background:var(--bg-color);border:1px solid var(--border);
+  color:var(--text-muted);font-size:14px;font-weight:600;letter-spacing:.5px;direction:ltr;
+}
+
+.selector-screen{text-align:center;padding:4px 0}
+.selector-screen h3{color:var(--text-muted);margin:0 0 26px;font-size:16px;line-height:1.6}
+.grid-options{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.option-btn{
+  padding:14px;font-size:16px;font-weight:700;border:2px solid var(--border);
+  background:var(--bg-color);color:var(--text-main);border-radius:10px;cursor:pointer;
+  transition:all .2s ease;position:relative;
+}
+.option-btn:hover{border-color:var(--primary)}
+.option-btn.selected{border-color:var(--primary);background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.option-btn.best-choice{border-color:#10b981}
+/* الشارة صارت زاوية صغيرة خارج الرقم */
+.best-badge{
+  position:absolute;top:-11px;inset-inline-end:6px;
+  background:#10b981;color:#fff;font-size:10px;line-height:1;
+  padding:3px 8px;border-radius:20px;font-weight:700;pointer-events:none;white-space:nowrap;
+}
+.option-btn.full-width{width:100%}
+
+.progress-container{width:100%;background:var(--border);border-radius:10px;height:16px;margin:22px 0 10px;overflow:hidden;display:none}
+.progress-bar{height:100%;width:0%;background:var(--primary);transition:width .2s ease;border-radius:10px}
+#progress-text{font-weight:600;color:var(--text-muted);font-size:14px;margin-bottom:12px;display:none}
+
+#heavy-warning{
+  color:#b45309;background:#fef3c7;padding:12px;border-radius:8px;font-size:14px;
+  font-weight:600;margin:14px 0;display:none;line-height:1.6;text-align:start;
+}
+.confirm-btn{
+  background:#10b981;color:#fff;border:none;padding:14px 35px;font-size:16px;font-weight:700;
+  border-radius:10px;cursor:pointer;display:none;margin:12px auto 0;transition:.2s;
+  box-shadow:0 4px 12px rgba(16,185,129,.3);
+}
+.confirm-btn:hover{background:#059669}
+
+#app-content{display:none}
+.controls{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.controls select,.controls input,.action-btn{
+  padding:12px;font-size:15px;border:1px solid var(--border);background:var(--card-bg);
+  color:var(--text-main);border-radius:10px;outline:none;width:100%;
+}
+.controls input:focus,.controls select:focus{border-color:var(--primary)}
+.action-btn{background:var(--primary);color:#fff;border:none;cursor:pointer;font-weight:700;transition:.2s}
+.action-btn:hover{background:var(--primary-hover)}
+
+#result-info{margin-bottom:12px;font-weight:600;color:var(--text-muted);font-size:14px;min-height:20px;line-height:1.6}
+#result-info.ok{color:#059669}
+#result-info.err{color:#dc2626}
+
+.pi-box{
+  max-height:320px;overflow-y:auto;background:var(--box-bg);color:var(--box-color);
+  padding:18px;border-radius:10px;font-family:'Courier New',Courier,monospace;
+  font-size:15px;line-height:1.7;word-break:break-all;direction:ltr;text-align:left;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.3);min-height:60px;
+}
+.d0{color:var(--c0)}.d1{color:var(--c1)}.d2{color:var(--c2)}.d3{color:var(--c3)}.d4{color:var(--c4)}
+.d5{color:var(--c5)}.d6{color:var(--c6)}.d7{color:var(--c7)}.d8{color:var(--c8)}.d9{color:var(--c9)}
+.letter-char{color:#38bdf8;font-weight:bold}
+.highlight{background:#facc15;color:#000!important;font-weight:bold;padding:0 3px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <button class="back-btn" id="backBtn" onclick="goBackToSelector()">رجوع</button>
+    <div class="top-controls">
+      <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+      <div class="lang-switcher">
+        <select id="langSelect" onchange="changeLanguage()">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="title-block">
+    <h2 id="mainTitle">مستكشف قيمة باي</h2>
+    <span class="sub" id="subTitle">Pi Explorer</span>
+  </div>
+
+  <div class="selector-screen" id="selectorScreen">
+    <h3 id="selectLabel">اختر عدد خانات باي للاستكشاف:</h3>
+
+    <div class="grid-options">
+      <button class="option-btn" onclick="prepareSelection(10000,this)">10k</button>
+      <button class="option-btn" onclick="prepareSelection(50000,this)">50k</button>
+      <button class="option-btn best-choice" onclick="prepareSelection(100000,this)">
+        100k<span class="best-badge" id="bestBadge">⭐ الأفضل</span>
+      </button>
+    </div>
+    <button class="option-btn full-width" onclick="prepareSelection(500000,this)">500k (500,000)</button>
+
+    <div id="heavy-warning"></div>
+    <button class="confirm-btn" id="confirmBtn" onclick="confirmSelection()">موافق</button>
+  </div>
+
+  <div id="app-content">
+    <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="progress-text">0%</div>
+
+    <div class="controls">
+      <select id="searchType" onchange="onModeChange()">
+        <option value="number" id="optNum">1,2,3</option>
+        <option value="letter" id="optLetter">A,B,C</option>
+      </select>
+      <input type="text" id="searchInput" inputmode="numeric" autocomplete="off" placeholder="اكتب رقماً للبحث...">
+      <button class="action-btn" id="searchBtn" onclick="searchPi()">بحث</button>
+    </div>
+
+    <div id="result-info"></div>
+    <div class="pi-box" id="piDisplay"></div>
+  </div>
+</div>
+
+<script>
+/* ============ الحالة ============ */
+let piVal = "";
+let lettersCache = "";
+let selectedCount = 0;
+let worker = null;
+let ready = false;
+const piCache = {};                 // نخزن النتيجة لكل عدد خانات حتى ما نعيد الحساب
+let infoState = { key: "", args: [], cls: "" };
+
+/* ============ الترجمة ============ */
+const translations = {
+  ar: {
+    title: "مستكشف قيمة باي", sub: "Pi Explorer",
+    selectLabel: "اختر عدد خانات باي للاستكشاف (100k هو الخيار الأفضل):",
+    bestBadge: "⭐ الأفضل",
+    warningMsg: "⚠️ تنبيه: اختيار 500 ألف خانة يشكل ضغطاً عالياً على المعالج، ويفضّل ذاكرة 6GB أو أكثر.",
+    confirmBtn: "موافق", backBtn: "رجوع",
+    optNum: "1,2,3", optLetter: "A,B,C",
+    placeholderNum: "اكتب رقماً للبحث...",
+    placeholderLetter: "اكتب حرفاً أو كلمة إنجليزية (مثلاً: H أو CAR)...",
+    searchBtn: "بحث",
+    loading: p => `جاري توليد الخانات... (${p}%)`,
+    ready: n => `جاهز! تم توليد ${n.toLocaleString()} خانة.`,
+    emptyQuery: "الرجاء إدخال نص أو رقم للبحث.",
+    found: (q, i) => `تم العثور على "${q}" في الموقع رقم: ${i.toLocaleString()}`,
+    notFound: q => `لم يتم العثور على "${q}" ضمن النطاق المختار.`,
+    workerErr: "حدث خطأ أثناء التوليد، جرّب عدداً أقل من الخانات."
+  },
+  en: {
+    title: "Pi Explorer", sub: "π",
+    selectLabel: "Choose number of Pi digits (100k is recommended):",
+    bestBadge: "⭐ Best",
+    warningMsg: "⚠️ Warning: 500k digits is heavy on the CPU. 6GB+ RAM is recommended.",
+    confirmBtn: "Confirm", backBtn: "Back",
+    optNum: "1,2,3", optLetter: "A,B,C",
+    placeholderNum: "Type a number to search...",
+    placeholderLetter: "Type letters or a word (e.g., H or CAR)...",
+    searchBtn: "Search",
+    loading: p => `Generating digits... (${p}%)`,
+    ready: n => `Ready! Generated ${n.toLocaleString()} digits.`,
+    emptyQuery: "Please enter text or a number to search.",
+    found: (q, i) => `Found "${q}" at position: ${i.toLocaleString()}`,
+    notFound: q => `"${q}" was not found in the selected range.`,
+    workerErr: "Generation failed. Try fewer digits."
+  },
+  es: {
+    title: "Explorador de Pi", sub: "π",
+    selectLabel: "Elige el número de dígitos (100k es la mejor opción):",
+    bestBadge: "⭐ Mejor",
+    warningMsg: "⚠️ Advertencia: 500k dígitos requiere un procesador potente o 6GB+ de RAM.",
+    confirmBtn: "Aceptar", backBtn: "Volver",
+    optNum: "1,2,3", optLetter: "A,B,C",
+    placeholderNum: "Escribe un número...",
+    placeholderLetter: "Escribe letras o una palabra...",
+    searchBtn: "Buscar",
+    loading: p => `Generando dígitos... (${p}%)`,
+    ready: n => `¡Listo! ${n.toLocaleString()} dígitos generados.`,
+    emptyQuery: "Ingresa texto o un número.",
+    found: (q, i) => `Encontrado "${q}" en la posición: ${i.toLocaleString()}`,
+    notFound: q => `No se encontró "${q}".`,
+    workerErr: "Error al generar. Prueba con menos dígitos."
+  },
+  fr: {
+    title: "Explorateur de Pi", sub: "π",
+    selectLabel: "Choisissez le nombre de chiffres (100k est le meilleur choix) :",
+    bestBadge: "⭐ Meilleur",
+    warningMsg: "⚠️ Avertissement : 500k chiffres nécessite un processeur puissant ou 6 Go+ de RAM.",
+    confirmBtn: "Confirmer", backBtn: "Retour",
+    optNum: "1,2,3", optLetter: "A,B,C",
+    placeholderNum: "Tapez un nombre...",
+    placeholderLetter: "Tapez des lettres ou un mot...",
+    searchBtn: "Rechercher",
+    loading: p => `Génération... (${p}%)`,
+    ready: n => `Prêt ! ${n.toLocaleString()} chiffres générés.`,
+    emptyQuery: "Veuillez entrer du texte ou un nombre.",
+    found: (q, i) => `"${q}" trouvé à la position : ${i.toLocaleString()}`,
+    notFound: q => `"${q}" non trouvé.`,
+    workerErr: "Échec de la génération. Essayez moins de chiffres."
+  }
+};
+
+const $ = id => document.getElementById(id);
+const T = () => translations[$('langSelect').value] || translations.ar;
+
+/* رسالة الحالة تنحفظ كمفتاح، فتتغير لغتها لما يغيّر المستخدم اللغة */
+function setInfo(key, args = [], cls = "") {
+  infoState = { key, args, cls };
+  renderInfo();
+}
+function renderInfo() {
+  const f = T()[infoState.key];
+  const el = $('result-info');
+  el.textContent = typeof f === 'function' ? f(...infoState.args) : (f || "");
+  el.className = infoState.cls;
+}
+
+/* ============ الثيم ============ */
+function toggleTheme() {
+  const html = document.documentElement, btn = $('themeToggleBtn');
+  if (html.getAttribute('data-theme') === 'dark') { html.removeAttribute('data-theme'); btn.textContent = '🌙'; }
+  else { html.setAttribute('data-theme', 'dark'); btn.textContent = '☀️'; }
+}
+
+/* ============ اختيار العدد ============ */
+function prepareSelection(count, btn) {
+  selectedCount = count;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const w = $('heavy-warning');
+  if (count === 500000) { w.textContent = T().warningMsg; w.style.display = 'block'; }
+  else { w.textContent = ""; w.style.display = 'none'; }
+  $('confirmBtn').style.display = 'block';
+}
+
+/* ============ توليد باي في Web Worker (خوارزمية Chudnovsky) ============ */
+function workerMain() {
+  const pow10 = n => 10n ** BigInt(n);
+
+  // sqrt(10005) * 10^p  بدقة مضاعفة تدريجياً (سريع)
+  function sqrtScaled(p) {
+    const N = 10005n * pow10(2 * p);
+    let x;
+    if (p <= 10) {
+      x = BigInt(Math.ceil(Math.sqrt(10005) * Math.pow(10, p))) + 2n;
+    } else {
+      const h = (p >> 1) + 2;
+      const s = pow10(p - h);
+      x = sqrtScaled(h) * s + 2n * s;
+    }
+    for (;;) {
+      const y = (x + N / x) >> 1n;
+      if (y >= x) break;
+      x = y;
+    }
+    return x;
+  }
+
+  function run(digits) {
+    const guard = 10;
+    const prec = digits + guard;
+    const terms = Math.ceil(prec / 14.181647462725477) + 2;
+    const C3 = 10939058860032000n;
+    const totalWork = terms * (Math.log2(terms) + 1);
+    let work = 0, lastPct = -1;
+
+    const report = pct => {
+      pct = Math.min(99, Math.floor(pct));
+      if (pct !== lastPct) { lastPct = pct; postMessage({ type: 'progress', pct }); }
+    };
+
+    function bs(a, b) {
+      if (b - a === 1) {
+        let P, Q;
+        if (a === 0) { P = 1n; Q = 1n; }
+        else {
+          const A = BigInt(a);
+          P = (6n * A - 5n) * (2n * A - 1n) * (6n * A - 1n);
+          Q = A * A * A * C3;
+        }
+        let T = P * (13591409n + 545140134n * BigInt(a));
+        if (a & 1) T = -T;
+        work += 1; report(work / totalWork * 70);
+        return [P, Q, T];
+      }
+      const m = (a + b) >> 1;
+      const L = bs(a, m), R = bs(m, b);
+      work += (b - a); report(work / totalWork * 70);
+      return [L[0] * R[0], L[1] * R[1], R[1] * L[2] + L[0] * R[2]];
+    }
+
+    const res = bs(0, terms);
+    const Q = res[1], T = res[2];
+    report(70);
+    const sq = sqrtScaled(prec);
+    report(85);
+    const piScaled = (Q * 426880n * sq) / T;
+    report(93);
+    const str = (piScaled / pow10(guard)).toString();
+    postMessage({ type: 'done', pi: str.slice(0, digits + 1) });
+  }
+
+  onmessage = e => {
+    try { run(e.data); }
+    catch (err) { postMessage({ type: 'error', message: String(err) }); }
+  };
+}
+
+function createWorker() {
+  const src = '(' + workerMain.toString() + ')()';
+  const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
+  const w = new Worker(url);
+  URL.revokeObjectURL(url);
+  return w;
+}
+
+function stopWorker() {
+  if (worker) { worker.terminate(); worker = null; }
+}
+
+function setProgress(pct) {
+  $('progressBar').style.width = pct + '%';
+  $('progress-text').textContent = pct + '%';
+}
+
+function confirmSelection() {
+  if (!selectedCount) return;
+  ready = false;
+  lettersCache = "";
+
+  $('selectorScreen').style.display = 'none';
+  $('app-content').style.display = 'block';
+  $('backBtn').style.visibility = 'visible';
+  $('piDisplay').innerHTML = "";
+  $('searchInput').value = "";
+
+  // لو الرقم محسوب من قبل، نعرضه فوراً
+  if (piCache[selectedCount]) {
+    piVal = piCache[selectedCount];
+    finishLoading();
+    return;
+  }
+
+  $('progressContainer').style.display = 'block';
+  $('progress-text').style.display = 'block';
+  setProgress(0);
+  setInfo('loading', [0]);
+
+  stopWorker();
+  try {
+    worker = createWorker();
+  } catch (e) {
+    setInfo('workerErr', [], 'err');
+    return;
+  }
+
+  const count = selectedCount;
+  worker.onmessage = e => {
+    const m = e.data;
+    if (m.type === 'progress') {
+      setProgress(m.pct);
+      setInfo('loading', [m.pct]);
+    } else if (m.type === 'done') {
+      piCache[count] = m.pi;
+      piVal = m.pi;
+      stopWorker();
+      setProgress(100);
+      setTimeout(finishLoading, 200);
+    } else if (m.type === 'error') {
+      stopWorker();
+      setInfo('workerErr', [], 'err');
+    }
+  };
+  worker.onerror = () => { stopWorker(); setInfo('workerErr', [], 'err'); };
+  worker.postMessage(count);
+}
+
+function finishLoading() {
+  $('progressContainer').style.display = 'none';
+  $('progress-text').style.display = 'none';
+  ready = true;
+  lettersCache = "";
+  setInfo('ready', [selectedCount]);
+  renderSnippet();
+}
+
+function goBackToSelector() {
+  stopWorker();                       // نوقف الحساب لو لسا شغال
+  ready = false;
+  $('app-content').style.display = 'none';
+  $('backBtn').style.visibility = 'hidden';
+  $('selectorScreen').style.display = 'block';
+  $('searchInput').value = "";
+}
+
+/* ============ اللغة ============ */
+function changeLanguage() {
+  const lang = $('langSelect').value, t = T();
+  const root = $('htmlRoot');
+  root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  root.setAttribute('lang', lang);
+
+  document.title = t.sub === 'π' ? t.title : `${t.title} - ${t.sub}`;
+  $('mainTitle').textContent = t.title;
+  $('subTitle').textContent = t.sub;
+  $('selectLabel').textContent = t.selectLabel;
+  $('bestBadge').textContent = t.bestBadge;
+  $('confirmBtn').textContent = t.confirmBtn;
+  $('backBtn').textContent = t.backBtn;
+  $('optNum').textContent = t.optNum;
+  $('optLetter').textContent = t.optLetter;
+  $('searchBtn').textContent = t.searchBtn;
+  $('searchInput').placeholder = $('searchType').value === 'letter' ? t.placeholderLetter : t.placeholderNum;
+  if (selectedCount === 500000) $('heavy-warning').textContent = t.warningMsg;
+  renderInfo();
+}
+
+/* ============ الحروف ============
+   كل رقمين = حرف، ونتجاهل الأزواج 78–99 حتى تتوزع الأحرف الـ26 بالتساوي */
+function getPiAsLetters() {
+  if (lettersCache) return lettersCache;
+  const parts = [];
+  for (let i = 1; i + 1 < piVal.length; i += 2) {     // نبدأ بعد الـ"3"
+    const pair = (piVal.charCodeAt(i) - 48) * 10 + (piVal.charCodeAt(i + 1) - 48);
+    if (pair < 78) parts.push(String.fromCharCode(65 + (pair % 26)));
+  }
+  lettersCache = parts.join("");
+  return lettersCache;
+}
+
+function onModeChange() {
+  const type = $('searchType').value;
+  const input = $('searchInput');
+  input.value = "";
+  input.placeholder = type === 'letter' ? T().placeholderLetter : T().placeholderNum;
+  input.setAttribute('inputmode', type === 'letter' ? 'text' : 'numeric');
+  if (ready) { setInfo('ready', [selectedCount]); renderSnippet(); }
+}
+
+/* ============ العرض ============ */
+function renderSnippet(hStart = -1, hLen = 0) {
+  if (!ready) return;
+  const type = $('searchType').value;
+  const str = type === 'letter' ? getPiAsLetters() : piVal;
+
+  let start = 0, end = Math.min(str.length, 5000);
+  if (hStart >= 0 && hLen > 0) {
+    start = Math.max(0, hStart - 200);
+    end = Math.min(str.length, hStart + hLen + 300);
+  }
+
+  let html = start > 0 ? "... " : "";
+  for (let i = start; i < end; i++) {
+    const ch = str[i];
+    if (hStart >= 0 && i >= hStart && i < hStart + hLen) html += `<span class="highlight">${ch}</span>`;
+    else if (type === 'letter') html += `<span class="letter-char">${ch}</span>`;
+    else html += `<span class="d${ch}">${ch}</span>`;
+  }
+  if (end < str.length) html += " ...";
+  $('piDisplay').innerHTML = html;
+}
+
+/* ============ البحث ============ */
+function searchPi() {
+  if (!ready) return;
+  const type = $('searchType').value;
+  const query = $('searchInput').value.trim();
+
+  // كلمات سر: كل وحدة تشتغل بقائمتها فقط
+  if (type === 'letter' && query.toLowerCase() === 'alya') {
+    window.open('https://youtu.be/3XqqkrJENB4?si=amFxRpOUX7w5tT7X', '_blank');
+    return;
+  }
+  if (type === 'number' && query === '71') {
+    window.open('https://www.instagram.com/qarzaid?srtk=YjRpcnE0MjJyY3Zv', '_blank');
+    return;
+  }
+
+  if (!query) { renderSnippet(); setInfo('emptyQuery'); return; }
+
+  const str = type === 'letter' ? getPiAsLetters() : piVal;
+  const target = type === 'letter' ? query.toUpperCase() : query;
+  const idx = str.indexOf(target);
+
+  if (idx !== -1) {
+    // الأرقام: الموقع بعد الفاصلة (أول رقم بعد 3. هو الخانة 1)، الحروف: الموقع يبدأ من 1
+    const pos = type === 'letter' ? idx + 1 : idx;
+    setInfo('found', [target, pos], 'ok');
+    renderSnippet(idx, target.length);
+  } else {
+    setInfo('notFound', [target], 'err');
+    renderSnippet();
+  }
+}
+
+/* مدخلات الأرقام فقط في وضع 1,2,3 + زر Enter للبحث */
+$('searchInput').addEventListener('input', e => {
+  if ($('searchType').value === 'number') e.target.value = e.target.value.replace(/\D/g, '');
+});
+$('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchPi(); });
+</script>
+</body>
+</html>
